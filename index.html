@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#5b2a86">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Municipios">
+<title>Estado Municipios</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235b2a86'/%3E%3Cpath d='M22 72V40l14 14 14-22 14 22 14-14v32z' fill='white'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f6f4f9; --card:#fff; --ink:#1d1726; --muted:#6c6478; --line:#e6e1ee;
+  --brand:#5b2a86; --brand-ink:#fff; --brand-soft:#efe6f7;
+  --green:#1f9d55; --yellow:#d69e00; --red:#d64545; --track:#ece8f2;
+  --shadow:0 1px 2px rgba(30,20,50,.06),0 2px 8px rgba(30,20,50,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#141118; --card:#1e1a24; --ink:#efeaf5; --muted:#a69db3; --line:#2f2938;
+    --brand:#a777d6; --brand-ink:#140f19; --brand-soft:#2c2238;
+    --green:#3ccf7f; --yellow:#f0bd2c; --red:#f06b6b; --track:#2d2736;
+    --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+.hidden{display:none!important}
+header.top{position:sticky;top:0;z-index:5;background:var(--brand);color:var(--brand-ink);padding:calc(10px + env(safe-area-inset-top)) 16px 10px;display:flex;align-items:center;gap:8px}
+header.top h1{font-size:17px;margin:0;flex:1}
+header.top button{background:transparent;border:1px solid currentColor;border-radius:8px;padding:4px 10px;font-size:13px;opacity:.9}
+main{padding:12px 16px calc(84px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:5;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{flex:1;background:none;border:0;padding:10px 0 12px;font-size:12px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav.tabs button .i{font-size:20px;line-height:1}
+nav.tabs button.on{color:var(--brand);font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi .v{font-size:24px;font-weight:700;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:12px;color:var(--muted)}
+.kpi.warn .v{color:var(--red)}
+h2{font-size:15px;margin:18px 0 8px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.seg{display:flex;background:var(--track);border-radius:10px;padding:3px;margin-bottom:10px}
+.seg button{flex:1;border:0;background:none;padding:7px 4px;border-radius:8px;font-size:13px;color:var(--muted)}
+.seg button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
+.row{display:flex;align-items:center;gap:8px}
+.grow{flex:1;min-width:0}
+.name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+.dot.g{background:var(--green)}.dot.y{background:var(--yellow)}.dot.r{background:var(--red)}
+.bar{height:7px;border-radius:4px;background:var(--track);overflow:hidden;margin-top:6px}
+.bar>i{display:block;height:100%;border-radius:4px;background:var(--brand)}
+.bar.av>i{background:var(--green)}
+.barl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:3px}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--brand-soft);color:var(--brand);vertical-align:middle;margin-left:4px}
+.badge.p{background:rgba(214,158,0,.15);color:var(--yellow)}
+.badge.x{background:var(--track);color:var(--muted)}
+.tap{cursor:pointer}
+.tap:active{opacity:.7}
+input[type=search],input[type=text],input[type=email],input[type=password],input[type=number],select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:16px}
+textarea{min-height:70px;resize:vertical}
+label.f{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:10px;padding:11px 16px;background:var(--brand);color:var(--brand-ink);font-weight:600;font-size:15px}
+.btn.sec{background:var(--brand-soft);color:var(--brand)}
+.btn.ghost{background:transparent;color:var(--brand);border:1px solid var(--line)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5}
+.qty{display:flex;align-items:center;gap:6px;margin-top:6px}
+.qty button{flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 0;font-weight:700;font-size:16px}
+.qty input{flex:1.4;text-align:center;font-size:22px;font-weight:700;padding:8px}
+.mini{display:flex;gap:4px}
+.mini button{width:38px;height:34px;border:1px solid var(--line);background:var(--card);border-radius:8px;font-weight:700;font-size:16px}
+.toolbar{display:flex;gap:8px;margin-bottom:10px}
+.toolbar select{width:auto}
+#sheet{position:fixed;inset:0;z-index:10;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
+#sheet header{position:sticky;top:0;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 16px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);z-index:2}
+#sheet header button.back{border:0;background:none;color:var(--brand);font-size:16px;font-weight:600;padding:4px 0}
+#sheet header h3{margin:0;font-size:17px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sheet .body{padding:12px 16px 40px;max-width:720px;margin:0 auto}
+.note{border-left:3px solid var(--brand);padding:4px 10px;margin:8px 0}
+.note .d{font-size:12px;color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:20px 0}
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+#toast.on{opacity:.95}
+.login{max-width:380px;margin:40px auto;padding:0 16px}
+.login h1{font-size:22px;margin:0 0 4px}
+.err{color:var(--red);font-size:14px;margin-top:8px}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--muted);margin:-2px 0 10px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.legend .dot{width:9px;height:9px}
+table.t{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+table.t td,table.t th{padding:7px 4px;border-bottom:1px solid var(--line);text-align:right}
+table.t th{font-size:12px;color:var(--muted);font-weight:600}
+table.t td:first-child,table.t th:first-child{text-align:left}
+.up{color:var(--green)}.down{color:var(--red)}
+svg.chart{width:100%;height:auto;display:block}
+.switch{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="login hidden">
+  <h1>Estado Municipios</h1>
+  <p class="meta">Seguimiento de líderes y metas · Atlántico</p>
+  <div class="seg" id="loginSeg">
+    <button data-m="in" class="on">Entrar</button>
+    <button data-m="up">Crear contraseña</button>
+  </div>
+  <form id="loginForm">
+    <label class="f">Correo</label>
+    <input id="mail" type="email" autocomplete="email" required>
+    <label class="f">Contraseña</label>
+    <input id="pw" type="password" autocomplete="current-password" minlength="6" required>
+    <div style="height:14px"></div>
+    <button class="btn block" id="loginBtn">Entrar</button>
+    <div class="err" id="loginErr"></div>
+  </form>
+  <p style="text-align:center"><a href="#" id="forgot" class="meta">¿Olvidaste tu contraseña?</a></p>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <header class="top">
+    <h1>Estado Municipios</h1>
+    <button id="logout">Salir</button>
+  </header>
+  <main id="view"></main>
+  <nav class="tabs">
+    <button data-t="resumen" class="on"><span class="i">◎</span>Resumen</button>
+    <button data-t="municipios"><span class="i">☰</span>Municipios</button>
+    <button data-t="prospectos"><span class="i">◇</span>Prospectos</button>
+    <button data-t="evolucion"><span class="i">↗</span>Evolución</button>
+  </nav>
+</div>
+
+<div id="sheet" class="hidden"></div>
+<div id="toast"></div>
+
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+
+const SUPABASE_URL = "https://jceibsxquebibycdfgjq.supabase.co";
+const SUPABASE_KEY = "sb_publishable_trKymtXxbtvxTEWWZstZjw_s9ZzPlum"; // clave pública; los datos los protege RLS
+const supa = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const fmt = n => (n ?? 0).toLocaleString("es-CO");
+const pct = (a, b) => b > 0 ? Math.round(a / b * 100) : 0;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fecha = d => new Date(d).toLocaleString("es-CO", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+const fechaCorta = d => new Date(d + "T12:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "short" });
+
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("on"), 2200);
+}
+
+const state = {
+  tab: localGet("tab") || "resumen",
+  modo: localGet("modo") || "todos",          // todos | confirmados
+  orden: localGet("orden") || "faltante",
+  q: "",
+  municipios: [], lideres: [],
+  sheet: null,                                  // {tipo:'mun'|'lider', id}
+};
+function localGet(k) { try { return localStorage.getItem("em_" + k); } catch { return null; } }
+function localSet(k, v) { try { localStorage.setItem("em_" + k, v); } catch {} }
+
+// ---------- AUTH ----------
+let loginMode = "in";
+$$("#loginSeg button").forEach(b => b.onclick = () => {
+  loginMode = b.dataset.m;
+  $$("#loginSeg button").forEach(x => x.classList.toggle("on", x === b));
+  $("#loginBtn").textContent = loginMode === "in" ? "Entrar" : "Crear contraseña y entrar";
+  $("#pw").autocomplete = loginMode === "in" ? "current-password" : "new-password";
+  $("#loginErr").textContent = "";
+});
+$("#loginForm").onsubmit = async e => {
+  e.preventDefault();
+  const email = $("#mail").value.trim().toLowerCase(), password = $("#pw").value;
+  $("#loginBtn").disabled = true; $("#loginErr").textContent = "";
+  let error;
+  if (loginMode === "in") ({ error } = await supa.auth.signInWithPassword({ email, password }));
+  else {
+    ({ error } = await supa.auth.signUp({ email, password }));
+    if (!error) ({ error } = await supa.auth.signInWithPassword({ email, password }));
+  }
+  $("#loginBtn").disabled = false;
+  if (error) {
+    const m = error.message || "";
+    $("#loginErr").textContent =
+      /no autorizado|Database error/i.test(m) ? "Ese correo no está autorizado." :
+      /Invalid login/i.test(m) ? "Correo o contraseña incorrectos." :
+      /already registered/i.test(m) ? "Ese correo ya tiene contraseña. Usa “Entrar”." : m;
+  }
+};
+$("#forgot").onclick = async e => {
+  e.preventDefault();
+  const email = $("#mail").value.trim();
+  if (!email) { $("#loginErr").textContent = "Escribe tu correo primero."; return; }
+  const { error } = await supa.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+  $("#loginErr").textContent = error ? error.message : "Te enviamos un correo para cambiar la contraseña (puede tardar y llegar a spam).";
+};
+$("#logout").onclick = () => supa.auth.signOut();
+
+supa.auth.onAuthStateChange(async (ev, session) => {
+  if (ev === "PASSWORD_RECOVERY") {
+    const pw = prompt("Escribe tu nueva contraseña (mínimo 6 caracteres):");
+    if (pw) { const { error } = await supa.auth.updateUser({ password: pw }); toast(error ? error.message : "Contraseña actualizada"); }
+  }
+  if (session) { $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); if (!state.loaded) iniciar(); }
+  else { state.loaded = false; $("#app").classList.add("hidden"); $("#sheet").classList.add("hidden"); $("#login").classList.remove("hidden"); }
+});
+
+// ---------- DATOS ----------
+async function cargar() {
+  const [m, l] = await Promise.all([
+    supa.from("municipios").select("*").order("orden").order("nombre"),
+    supa.from("lideres").select("*").order("orden").order("id"),
+  ]);
+  if (m.error || l.error) { toast("Error cargando: " + (m.error || l.error).message); return; }
+  state.municipios = m.data; state.lideres = l.data;
+}
+
+let canal;
+async function iniciar() {
+  state.loaded = true;
+  await cargar();
+  render();
+  if (!canal) {
+    let t;
+    canal = supa.channel("cambios")
+      .on("postgres_changes", { event: "*", schema: "public", table: "lideres" }, () => { clearTimeout(t); t = setTimeout(refrescar, 400); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "municipios" }, () => { clearTimeout(t); t = setTimeout(refrescar, 400); })
+      .subscribe();
+  }
+}
+async function refrescar() { await cargar(); render(); if (state.sheet) abrirSheet(state.sheet, true); }
+document.addEventListener("visibilitychange", () => { if (!document.hidden && state.loaded) refrescar(); });
+
+// Cálculos por municipio (respeta el modo todos/confirmados)
+function calc(m) {
+  const ls = state.lideres.filter(l => l.municipio_id === m.id && l.activo);
+  const cuenta = state.modo === "confirmados" ? ls.filter(l => l.estado === "confirmado") : ls;
+  const asignado = cuenta.reduce((s, l) => s + (l.meta_individual || 0), 0);
+  const logrados = cuenta.reduce((s, l) => s + (l.logrados || 0), 0);
+  const faltante = m.meta_total - asignado;
+  const cob = pct(asignado, m.meta_total);
+  return {
+    ls, asignado, logrados, faltante, cob,
+    avance: pct(logrados, asignado),
+    prospectos: ls.filter(l => l.estado === "prospecto").length,
+    color: cob >= 90 ? "g" : cob >= 60 ? "y" : "r",
+  };
+}
+function totales() {
+  return state.municipios.reduce((t, m) => {
+    const c = calc(m);
+    t.meta += m.meta_total; t.asignado += c.asignado; t.faltante += c.faltante; t.logrados += c.logrados;
+    t.lideres += c.ls.length; t.prospectos += c.prospectos; return t;
+  }, { meta: 0, asignado: 0, faltante: 0, logrados: 0, lideres: 0, prospectos: 0 });
+}
+
+// ---------- RENDER ----------
+$$("nav.tabs button").forEach(b => b.onclick = () => { state.tab = b.dataset.t; localSet("tab", state.tab); render(); scrollTo(0, 0); });
+
+function segModo() {
+  return `<div class="seg" id="segModo">
+    <button data-m="todos" class="${state.modo === "todos" ? "on" : ""}">Con prospectos</button>
+    <button data-m="confirmados" class="${state.modo === "confirmados" ? "on" : ""}">Solo confirmados</button>
+  </div>`;
+}
+function bindSegModo(root = document) {
+  $$("#segModo button", root).forEach(b => b.onclick = () => { state.modo = b.dataset.m; localSet("modo", state.modo); render(); if (state.sheet) abrirSheet(state.sheet, true); });
+}
+const leyenda = `<div class="legend"><span><i class="dot g"></i>≥90% de la meta asignada</span><span><i class="dot y"></i>60–89%</span><span><i class="dot r"></i>&lt;60%</span></div>`;
+
+function render() {
+  $$("nav.tabs button").forEach(b => b.classList.toggle("on", b.dataset.t === state.tab));
+  const v = $("#view");
+  ({ resumen: vResumen, municipios: vMunicipios, prospectos: vProspectos, evolucion: vEvolucion })[state.tab](v);
+}
+
+function tarjetaMun(m) {
+  const c = calc(m);
+  return `<div class="card tap" data-mun="${m.id}">
+    <div class="row"><i class="dot ${c.color}"></i>
+      <div class="grow name">${esc(m.nombre)}${c.prospectos ? `<span class="badge p">${c.prospectos} prosp.</span>` : ""}</div>
+      <div class="meta">${c.faltante > 0 ? "Falta <b>" + fmt(c.faltante) + "</b>" : c.faltante < 0 ? "Sobra " + fmt(-c.faltante) : "Completo"}</div>
+    </div>
+    <div class="meta" style="margin-top:2px">Meta ${fmt(m.meta_total)} · Asignado ${fmt(c.asignado)} · ${c.ls.length} líder${c.ls.length === 1 ? "" : "es"}</div>
+    <div class="bar"><i style="width:${Math.min(c.cob, 100)}%"></i></div>
+    <div class="bar av"><i style="width:${Math.min(c.avance, 100)}%"></i></div>
+    <div class="barl"><span>Asignado ${c.cob}% de la meta</span><span>Logrados ${fmt(c.logrados)} (${c.avance}%)</span></div>
+  </div>`;
+}
+function bindMun(root) { $$("[data-mun]", root).forEach(e => e.onclick = () => abrirSheet({ tipo: "mun", id: +e.dataset.mun })); }
+
+function vResumen(v) {
+  const t = totales();
+  const atrasados = [...state.municipios].sort((a, b) => calc(b).faltante - calc(a).faltante).slice(0, 5);
+  v.innerHTML = `
+    ${segModo()}
+    <div class="kpis">
+      <div class="kpi"><div class="l">Meta total</div><div class="v">${fmt(t.meta)}</div><div class="s">${state.municipios.length} municipios</div></div>
+      <div class="kpi"><div class="l">Asignado a líderes</div><div class="v">${fmt(t.asignado)}</div><div class="s">${pct(t.asignado, t.meta)}% de la meta · ${t.lideres} líderes</div></div>
+      <div class="kpi warn"><div class="l">Faltante</div><div class="v">${fmt(t.faltante)}</div><div class="s">por asignar</div></div>
+      <div class="kpi"><div class="l">Logrados</div><div class="v">${fmt(t.logrados)}</div><div class="s">${pct(t.logrados, t.asignado)}% de lo asignado</div></div>
+    </div>
+    <div class="card">
+      <div class="meta">Avance real sobre la meta total</div>
+      <div class="bar av" style="height:10px"><i style="width:${Math.min(pct(t.logrados, t.meta), 100)}%"></i></div>
+      <div class="barl"><span>${fmt(t.logrados)} de ${fmt(t.meta)}</span><span>${pct(t.logrados, t.meta)}%</span></div>
+    </div>
+    <h2>Donde más falta</h2>
+    ${atrasados.map(tarjetaMun).join("")}
+    <button class="btn ghost block" id="verTodos">Ver los ${state.municipios.length} municipios</button>`;
+  bindSegModo(v); bindMun(v);
+  $("#verTodos").onclick = () => { state.tab = "municipios"; localSet("tab", "municipios"); render(); scrollTo(0, 0); };
+}
+
+function vMunicipios(v) {
+  const q = state.q.toLowerCase();
+  let ms = state.municipios.filter(m => !q || m.nombre.toLowerCase().includes(q) ||
+    state.lideres.some(l => l.municipio_id === m.id && l.nombre.toLowerCase().includes(q)));
+  const key = { faltante: m => -calc(m).faltante, nombre: m => m.nombre, avance: m => calc(m).avance, cobertura: m => calc(m).cob }[state.orden];
+  ms.sort((a, b) => { const x = key(a), y = key(b); return x < y ? -1 : x > y ? 1 : 0; });
+  v.innerHTML = `
+    ${segModo()}
+    <div class="toolbar">
+      <input type="search" id="q" placeholder="Buscar municipio o líder" value="${esc(state.q)}">
+      <select id="orden">
+        <option value="faltante">Más faltante</option>
+        <option value="cobertura">Menor asignado</option>
+        <option value="avance">Menor avance</option>
+        <option value="nombre">A–Z</option>
+      </select>
+    </div>
+    ${leyenda}
+    ${ms.map(tarjetaMun).join("") || `<div class="empty">Sin resultados</div>`}
+    <button class="btn sec block" id="nuevoMun">+ Agregar municipio</button>`;
+  bindSegModo(v); bindMun(v);
+  $("#orden").value = state.orden;
+  $("#orden").onchange = e => { state.orden = e.target.value; localSet("orden", state.orden); render(); };
+  const q2 = $("#q");
+  q2.oninput = () => { state.q = q2.value; const pos = q2.selectionStart; render(); const n = $("#q"); n.focus(); n.setSelectionRange(pos, pos); };
+  $("#nuevoMun").onclick = async () => {
+    const nombre = prompt("Nombre del municipio:"); if (!nombre?.trim()) return;
+    const meta = parseInt(prompt("Meta total:", "0") || "0", 10) || 0;
+    const { error } = await supa.from("municipios").insert({ nombre: nombre.trim(), meta_total: meta, orden: state.municipios.length + 1 });
+    if (error) return toast(error.message);
+    toast("Municipio agregado"); refrescar();
+  };
+}
+
+function vProspectos(v) {
+  const ps = state.lideres.filter(l => l.estado === "prospecto" && l.activo);
+  const mun = id => state.municipios.find(m => m.id === id)?.nombre || "";
+  const total = ps.reduce((s, l) => s + (l.meta_individual || 0), 0);
+  v.innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><div class="l">Prospectos por cerrar</div><div class="v">${ps.length}</div></div>
+      <div class="kpi"><div class="l">Meta en juego</div><div class="v">${fmt(total)}</div><div class="s">si se cierran todos</div></div>
+    </div>
+    ${ps.map(l => `<div class="card tap" data-lider="${l.id}">
+      <div class="row"><div class="grow"><div class="name">${esc(l.nombre)}</div><div class="meta">${esc(mun(l.municipio_id))}</div></div>
+      <div class="meta" style="text-align:right">${l.meta_individual != null ? "Meta " + fmt(l.meta_individual) : "Sin meta"}<br>${l.registros != null ? fmt(l.registros) + " reg." : ""}</div></div>
+    </div>`).join("") || `<div class="empty">No hay prospectos pendientes 🎉</div>`}`;
+  $$("[data-lider]", v).forEach(e => e.onclick = () => abrirSheet({ tipo: "lider", id: +e.dataset.lider }));
+}
+
+async function vEvolucion(v) {
+  v.innerHTML = `<div class="empty">Cargando…</div>`;
+  const { data, error } = await supa.from("cortes").select("fecha,lider_id,logrados,meta_individual").order("fecha");
+  if (error) { v.innerHTML = `<div class="empty">${esc(error.message)}</div>`; return; }
+  if (state.tab !== "evolucion") return;
+  const fechas = [...new Set(data.map(c => c.fecha))];
+  const porFecha = fechas.map(f => data.filter(c => c.fecha === f).reduce((s, c) => s + c.logrados, 0));
+  const munDe = id => state.lideres.find(l => l.id === id)?.municipio_id;
+  const ult = fechas.at(-1), prev = fechas.at(-2);
+  const suma = (f, mid) => data.filter(c => c.fecha === f && munDe(c.lider_id) === mid).reduce((s, c) => s + c.logrados, 0);
+  v.innerHTML = `
+    <div class="card">
+      <div class="meta">Total logrados por corte</div>
+      ${fechas.length ? grafica(fechas, porFecha) : `<div class="empty">Aún no hay cortes. Se toma uno automático cada lunes a las 6 a.m.</div>`}
+    </div>
+    <button class="btn sec block" id="corte">Tomar corte ahora</button>
+    ${ult ? `<h2>Por municipio · ${fechaCorta(ult)}${prev ? " vs " + fechaCorta(prev) : ""}</h2>
+    <div class="card"><table class="t"><tr><th>Municipio</th><th>Logrados</th><th>Cambio</th></tr>
+    ${state.municipios.map(m => { const a = suma(ult, m.id), b = prev ? suma(prev, m.id) : null, d = b == null ? null : a - b;
+      return `<tr><td>${esc(m.nombre)}</td><td>${fmt(a)}</td><td class="${d > 0 ? "up" : d < 0 ? "down" : ""}">${d == null ? "—" : (d > 0 ? "+" : "") + fmt(d)}</td></tr>`; }).join("")}
+    </table></div>` : ""}`;
+  $("#corte").onclick = async () => {
+    const { data: n, error } = await supa.rpc("tomar_corte");
+    toast(error ? error.message : `Corte guardado (${n} líderes)`); if (!error) vEvolucion(v);
+  };
+}
+
+function grafica(xs, ys) {
+  const W = 320, H = 140, P = 24, max = Math.max(...ys, 1);
+  const x = i => xs.length === 1 ? W / 2 : P + i * (W - 2 * P) / (xs.length - 1);
+  const y = val => H - P - val / max * (H - 2 * P);
+  const pts = ys.map((val, i) => `${x(i)},${y(val)}`).join(" ");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolución de logrados">
+    <line x1="${P}" y1="${H - P}" x2="${W - P}" y2="${H - P}" stroke="var(--line)"/>
+    <polyline points="${pts}" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linejoin="round"/>
+    ${ys.map((val, i) => `<circle cx="${x(i)}" cy="${y(val)}" r="3.5" fill="var(--brand)"/>
+      <text x="${x(i)}" y="${y(val) - 8}" font-size="10" text-anchor="middle" fill="var(--ink)">${fmt(val)}</text>`).join("")}
+    ${xs.map((f, i) => (xs.length <= 6 || i % Math.ceil(xs.length / 6) === 0 || i === xs.length - 1) ?
+      `<text x="${x(i)}" y="${H - 8}" font-size="10" text-anchor="middle" fill="var(--muted)">${fechaCorta(f)}</text>` : "").join("")}
+  </svg>`;
+}
+
+// ---------- HOJAS (detalle) ----------
+const pila = [];
+function abrirSheet(s, refresco = false) {
+  if (!refresco && state.sheet) pila.push(state.sheet);
+  state.sheet = s;
+  const el = $("#sheet"); el.classList.remove("hidden"); document.body.style.overflow = "hidden";
+  if (s.tipo === "mun") hojaMun(el, s.id); else hojaLider(el, s.id);
+  if (!refresco) el.scrollTop = 0;
+}
+function cerrarSheet() {
+  const prev = pila.pop();
+  if (prev) { state.sheet = prev; abrirSheet(prev, true); $("#sheet").scrollTop = 0; return; }
+  state.sheet = null; $("#sheet").classList.add("hidden"); document.body.style.overflow = ""; render();
+}
+const cabecera = titulo => `<header><button class="back" id="back">‹ Atrás</button><h3>${esc(titulo)}</h3></header>`;
+
+function hojaMun(el, id) {
+  const m = state.municipios.find(x => x.id === id); if (!m) return cerrarSheet();
+  const c = calc(m);
+  const inactivos = state.lideres.filter(l => l.municipio_id === id && !l.activo);
+  const filaLider = l => {
+    const av = pct(l.logrados, l.meta_individual || 0);
+    return `<div class="card">
+      <div class="row">
+        <div class="grow tap" data-lider="${l.id}">
+          <div class="name">${esc(l.nombre)}${l.estado === "prospecto" ? `<span class="badge p">prospecto</span>` : ""}${!l.activo ? `<span class="badge x">inactivo</span>` : ""}</div>
+          <div class="meta">Meta ${l.meta_individual != null ? fmt(l.meta_individual) : "—"} · Reg. ${l.registros != null ? fmt(l.registros) : "—"} · <b>Logrados ${fmt(l.logrados)}</b></div>
+        </div>
+        ${l.activo ? `<div class="mini"><button data-d="-1" data-id="${l.id}" aria-label="Restar uno">−</button><button data-d="1" data-id="${l.id}" aria-label="Sumar uno">+</button></div>` : ""}
+      </div>
+      ${l.meta_individual ? `<div class="bar av"><i style="width:${Math.min(av, 100)}%"></i></div><div class="barl"><span></span><span>${av}%</span></div>` : ""}
+    </div>`;
+  };
+  el.innerHTML = cabecera(m.nombre) + `<div class="body">
+    ${segModo()}
+    <div class="kpis">
+      <div class="kpi tap" id="editMeta"><div class="l">Meta total ✎</div><div class="v">${fmt(m.meta_total)}</div></div>
+      <div class="kpi ${c.faltante > 0 ? "warn" : ""}"><div class="l">Faltante</div><div class="v">${fmt(c.faltante)}</div><div class="s">asignado ${fmt(c.asignado)} (${c.cob}%)</div></div>
+    </div>
+    <div class="card"><div class="meta">Logrados ${fmt(c.logrados)} de ${fmt(c.asignado)} asignados</div>
+      <div class="bar av"><i style="width:${Math.min(c.avance, 100)}%"></i></div></div>
+    <h2>Líderes (${c.ls.length})</h2>
+    ${c.ls.map(filaLider).join("") || `<div class="empty">Sin líderes todavía</div>`}
+    <button class="btn sec block" id="nuevoLider">+ Agregar líder</button>
+    ${inactivos.length ? `<h2>Inactivos (${inactivos.length})</h2>${inactivos.map(filaLider).join("")}` : ""}
+  </div>`;
+  $("#back").onclick = cerrarSheet;
+  bindSegModo(el);
+  $$("[data-lider]", el).forEach(e => e.onclick = () => abrirSheet({ tipo: "lider", id: +e.dataset.lider }));
+  $$(".mini button", el).forEach(b => b.onclick = () => sumar(+b.dataset.id, +b.dataset.d));
+  $("#editMeta").onclick = async () => {
+    const v = prompt(`Meta total de ${m.nombre}:`, m.meta_total); if (v == null) return;
+    const n = parseInt(v, 10); if (isNaN(n) || n < 0) return toast("Número inválido");
+    const { error } = await supa.from("municipios").update({ meta_total: n }).eq("id", m.id);
+    if (error) return toast(error.message); toast("Meta actualizada"); refrescar();
+  };
+  $("#nuevoLider").onclick = async () => {
+    const nombre = prompt("Nombre del líder:"); if (!nombre?.trim()) return;
+    const prospecto = confirm("¿Es un PROSPECTO (aún no confirmado)?\nAceptar = prospecto · Cancelar = confirmado");
+    const { data, error } = await supa.from("lideres").insert({ municipio_id: m.id, nombre: nombre.trim(), estado: prospecto ? "prospecto" : "confirmado", orden: 1000 }).select().single();
+    if (error) return toast(error.message);
+    await cargar(); abrirSheet({ tipo: "lider", id: data.id });
+  };
+}
+
+async function sumar(id, d) {
+  const l = state.lideres.find(x => x.id === id); if (!l) return;
+  const nuevo = Math.max(0, (l.logrados || 0) + d);
+  l.logrados = nuevo; abrirSheet(state.sheet, true);           // respuesta inmediata
+  const { error } = await supa.from("lideres").update({ logrados: nuevo }).eq("id", id);
+  if (error) { toast(error.message); refrescar(); }
+}
+
+async function hojaLider(el, id) {
+  const l = state.lideres.find(x => x.id === id); if (!l) return cerrarSheet();
+  const m = state.municipios.find(x => x.id === l.municipio_id);
+  el.innerHTML = cabecera(l.nombre) + `<div class="body">
+    <div class="meta">${esc(m?.nombre)}${l.actualizado_por ? ` · actualizado ${fecha(l.actualizado)} por ${esc(l.actualizado_por)}` : ""}</div>
+    <label class="f">Logrados (registros reales)</label>
+    <div class="qty">
+      <button data-q="-10">−10</button><button data-q="-1">−1</button>
+      <input type="number" id="fLog" inputmode="numeric" min="0" value="${l.logrados}">
+      <button data-q="1">+1</button><button data-q="10">+10</button>
+    </div>
+    ${l.meta_individual ? `<div class="bar av"><i id="fBar" style="width:${Math.min(pct(l.logrados, l.meta_individual), 100)}%"></i></div>
+      <div class="barl"><span>Meta ${fmt(l.meta_individual)}</span><span id="fPct">${pct(l.logrados, l.meta_individual)}%</span></div>` : ""}
+    <label class="f">Estado</label>
+    <div class="seg" id="fEstado">
+      <button data-e="confirmado" class="${l.estado === "confirmado" ? "on" : ""}">Confirmado</button>
+      <button data-e="prospecto" class="${l.estado === "prospecto" ? "on" : ""}">Prospecto</button>
+    </div>
+    <div class="row" style="gap:10px">
+      <div class="grow"><label class="f">Registros (declarados)</label><input type="number" id="fReg" inputmode="numeric" min="0" value="${l.registros ?? ""}"></div>
+      <div class="grow"><label class="f">Meta individual</label><input type="number" id="fMeta" inputmode="numeric" min="0" value="${l.meta_individual ?? ""}"></div>
+    </div>
+    <label class="f">Nombre</label>
+    <input type="text" id="fNom" value="${esc(l.nombre)}">
+    <label class="f">Municipio</label>
+    <select id="fMun">${state.municipios.map(x => `<option value="${x.id}" ${x.id === l.municipio_id ? "selected" : ""}>${esc(x.nombre)}</option>`).join("")}</select>
+    <div class="switch"><span>Activo</span><input type="checkbox" id="fAct" ${l.activo ? "checked" : ""} style="width:22px;height:22px"></div>
+    <button class="btn block" id="guardar">Guardar cambios</button>
+
+    <h2>Bitácora</h2>
+    <textarea id="nota" placeholder="Llamada, visita, compromiso…"></textarea>
+    <div style="height:8px"></div>
+    <button class="btn sec block" id="addNota">Agregar nota</button>
+    <div id="notas"><div class="empty">Cargando…</div></div>
+
+    <h2>Historial semanal</h2>
+    <div id="hist" class="card"><div class="empty">Cargando…</div></div>
+  </div>`;
+  $("#back").onclick = cerrarSheet;
+  let estado = l.estado;
+  $$("#fEstado button", el).forEach(b => b.onclick = () => { estado = b.dataset.e; $$("#fEstado button", el).forEach(x => x.classList.toggle("on", x === b)); });
+  const fLog = $("#fLog");
+  const pinta = () => { if (!l.meta_individual) return; const p = pct(+fLog.value || 0, l.meta_individual); $("#fBar").style.width = Math.min(p, 100) + "%"; $("#fPct").textContent = p + "%"; };
+  fLog.oninput = pinta;
+  $$("[data-q]", el).forEach(b => b.onclick = () => { fLog.value = Math.max(0, (+fLog.value || 0) + +b.dataset.q); pinta(); });
+  const num = v => v === "" ? null : Math.max(0, parseInt(v, 10) || 0);
+  $("#guardar").onclick = async () => {
+    const nombre = $("#fNom").value.trim(); if (!nombre) return toast("El nombre no puede quedar vacío");
+    const cambios = { logrados: num(fLog.value) ?? 0, estado, registros: num($("#fReg").value), meta_individual: num($("#fMeta").value),
+      nombre, municipio_id: +$("#fMun").value, activo: $("#fAct").checked };
+    $("#guardar").disabled = true;
+    const { error } = await supa.from("lideres").update(cambios).eq("id", l.id);
+    $("#guardar").disabled = false;
+    if (error) return toast(error.message);
+    toast("Guardado"); await cargar(); cerrarSheet();
+  };
+  $("#addNota").onclick = async () => {
+    const nota = $("#nota").value.trim(); if (!nota) return;
+    const { error } = await supa.from("bitacora").insert({ lider_id: l.id, nota });
+    if (error) return toast(error.message);
+    $("#nota").value = ""; toast("Nota agregada"); cargarNotas();
+  };
+  const cargarNotas = async () => {
+    const { data, error } = await supa.from("bitacora").select("*").eq("lider_id", l.id).order("fecha", { ascending: false });
+    $("#notas").innerHTML = error ? esc(error.message) : data.map(n => `<div class="note"><div class="d">${fecha(n.fecha)} · ${esc(n.autor || "")}</div>${esc(n.nota).replace(/\n/g, "<br>")}</div>`).join("") || `<div class="empty">Sin notas todavía</div>`;
+  };
+  cargarNotas();
+  const { data: cs } = await supa.from("cortes").select("fecha,logrados").eq("lider_id", l.id).order("fecha");
+  if ($("#hist")) $("#hist").innerHTML = cs?.length ? grafica(cs.map(c => c.fecha), cs.map(c => c.logrados)) : `<div class="empty">Sin cortes todavía</div>`;
+}
+
+// Arranque
+const { data: { session } } = await supa.auth.getSession();
+if (!session) $("#login").classList.remove("hidden");
+</script>
+</body>
+</html>
