@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#5b2a86">
 <meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://jceibsxquebibycdfgjq.supabase.co wss://jceibsxquebibycdfgjq.supabase.co; base-uri 'none'; form-action 'self'">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Municipios">
 <title>Estado Municipios</title>
@@ -71,10 +72,11 @@ label.f{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
 .btn.block{width:100%}
 .btn:disabled{opacity:.5}
 .qty{display:flex;align-items:center;gap:6px;margin-top:6px}
-.qty button{flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 0;font-weight:700;font-size:16px}
+.qty button{flex:1;touch-action:manipulation;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 0;font-weight:700;font-size:16px}
 .qty input{flex:1.4;text-align:center;font-size:22px;font-weight:700;padding:8px}
 .mini{display:flex;gap:4px}
-.mini button{width:38px;height:34px;border:1px solid var(--line);background:var(--card);border-radius:8px;font-weight:700;font-size:16px}
+.mini{gap:8px}
+.mini button{width:44px;height:44px;touch-action:manipulation;border:1px solid var(--line);background:var(--card);border-radius:8px;font-weight:700;font-size:16px}
 .toolbar{display:flex;gap:8px;margin-bottom:10px}
 .toolbar select{width:auto}
 #sheet{position:fixed;inset:0;z-index:10;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
@@ -117,6 +119,12 @@ svg.chart{width:100%;height:auto;display:block}
     <input id="mail" type="email" autocomplete="email" required>
     <label class="f">Contraseña</label>
     <input id="pw" type="password" autocomplete="current-password" minlength="6" required>
+    <div id="soloRegistro" class="hidden">
+      <label class="f">Repite la contraseña</label>
+      <input id="pw2" type="password" autocomplete="new-password" minlength="6">
+      <label class="f">Código de invitación</label>
+      <input id="codigo" type="text" autocomplete="off" autocapitalize="characters">
+    </div>
     <div style="height:14px"></div>
     <button class="btn block" id="loginBtn">Entrar</button>
     <div class="err" id="loginErr"></div>
@@ -142,8 +150,11 @@ svg.chart{width:100%;height:auto;display:block}
 <div id="sheet" class="hidden"></div>
 <div id="toast"></div>
 
+<div id="sinRed" class="login hidden"><h1>Estado Municipios</h1><p class="meta">No se pudo cargar la app. Revisa la conexión a internet y vuelve a abrirla.</p><button class="btn block" onclick="location.reload()">Reintentar</button></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script type="module">
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+if (!window.supabase) { document.getElementById("sinRed").classList.remove("hidden"); throw new Error("supabase-js no cargó"); }
+const { createClient } = window.supabase;
 
 const SUPABASE_URL = "https://jceibsxquebibycdfgjq.supabase.co";
 const SUPABASE_KEY = "sb_publishable_trKymtXxbtvxTEWWZstZjw_s9ZzPlum"; // clave pública; los datos los protege RLS
@@ -153,6 +164,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const fmt = n => (n ?? 0).toLocaleString("es-CO");
 const pct = (a, b) => b > 0 ? Math.round(a / b * 100) : 0;
+const entero = v => { const d = String(v ?? "").replace(/\D/g, ""); return d === "" ? null : parseInt(d, 10); };
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fecha = d => new Date(d).toLocaleString("es-CO", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 const fechaCorta = d => new Date(d + "T12:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "short" });
@@ -180,69 +192,99 @@ $$("#loginSeg button").forEach(b => b.onclick = () => {
   $$("#loginSeg button").forEach(x => x.classList.toggle("on", x === b));
   $("#loginBtn").textContent = loginMode === "in" ? "Entrar" : "Crear contraseña y entrar";
   $("#pw").autocomplete = loginMode === "in" ? "current-password" : "new-password";
+  $("#soloRegistro").classList.toggle("hidden", loginMode === "in");
   $("#loginErr").textContent = "";
 });
 $("#loginForm").onsubmit = async e => {
   e.preventDefault();
   const email = $("#mail").value.trim().toLowerCase(), password = $("#pw").value;
+  if (loginMode === "up") {
+    if (password !== $("#pw2").value) { $("#loginErr").textContent = "Las contraseñas no coinciden."; return; }
+    if (!$("#codigo").value.trim()) { $("#loginErr").textContent = "Escribe el código de invitación."; return; }
+  }
   $("#loginBtn").disabled = true; $("#loginErr").textContent = "";
   let error;
   if (loginMode === "in") ({ error } = await supa.auth.signInWithPassword({ email, password }));
   else {
-    ({ error } = await supa.auth.signUp({ email, password }));
+    ({ error } = await supa.auth.signUp({ email, password, options: { data: { codigo: $("#codigo").value.trim().toUpperCase() } } }));
     if (!error) ({ error } = await supa.auth.signInWithPassword({ email, password }));
   }
   $("#loginBtn").disabled = false;
   if (error) {
     const m = error.message || "";
     $("#loginErr").textContent =
-      /no autorizado|Database error/i.test(m) ? "Ese correo no está autorizado." :
-      /Invalid login/i.test(m) ? "Correo o contraseña incorrectos." :
-      /already registered/i.test(m) ? "Ese correo ya tiene contraseña. Usa “Entrar”." : m;
+      /Registro no permitido|Database error/i.test(m) ? "No se pudo crear la cuenta. Revisa el correo y el código de invitación." :
+      /already registered/i.test(m) ? "Ese correo ya tiene contraseña. Usa “Entrar”." :
+      /Invalid login/i.test(m) ? (loginMode === "up" ? "Si ya tenías cuenta, usa “Entrar” o “¿Olvidaste tu contraseña?”." : "Correo o contraseña incorrectos.") : m;
   }
 };
 $("#forgot").onclick = async e => {
   e.preventDefault();
-  const email = $("#mail").value.trim();
+  const email = $("#mail").value.trim().toLowerCase();
   if (!email) { $("#loginErr").textContent = "Escribe tu correo primero."; return; }
   const { error } = await supa.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
-  $("#loginErr").textContent = error ? error.message : "Te enviamos un correo para cambiar la contraseña (puede tardar y llegar a spam).";
+  $("#loginErr").textContent = error ? error.message : "Si el correo está registrado, te llegará un enlace para cambiar la contraseña (puede tardar y llegar a spam).";
 };
 $("#logout").onclick = () => supa.auth.signOut();
 
-supa.auth.onAuthStateChange(async (ev, session) => {
-  if (ev === "PASSWORD_RECOVERY") {
-    const pw = prompt("Escribe tu nueva contraseña (mínimo 6 caracteres):");
-    if (pw) { const { error } = await supa.auth.updateUser({ password: pw }); toast(error ? error.message : "Contraseña actualizada"); }
-  }
-  if (session) { $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); if (!state.loaded) iniciar(); }
-  else { state.loaded = false; $("#app").classList.add("hidden"); $("#sheet").classList.add("hidden"); $("#login").classList.remove("hidden"); }
+function nuevaContrasena() {
+  const pw = prompt("Escribe tu nueva contraseña (mínimo 6 caracteres):");
+  if (!pw) return;
+  if (pw.length < 6) { toast("Mínimo 6 caracteres"); return nuevaContrasena(); }
+  supa.auth.updateUser({ password: pw }).then(({ error }) => toast(error ? error.message : "Contraseña actualizada"));
+}
+
+supa.auth.onAuthStateChange((ev, session) => {
+  // Nada de await aquí: supabase-js tiene el candado de sesión tomado dentro de este callback
+  setTimeout(() => {
+    if (ev === "PASSWORD_RECOVERY") nuevaContrasena();
+    if (session) { $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); if (!state.loaded) iniciar(); }
+    else salir();
+  }, 0);
 });
+function salir() {
+  state.loaded = false; state.sheet = null; pila.length = 0; state.municipios = []; state.lideres = [];
+  if (canal) { supa.removeChannel(canal); canal = null; }
+  $("#app").classList.add("hidden"); $("#sheet").classList.add("hidden"); document.body.style.overflow = "";
+  $("#login").classList.remove("hidden");
+}
 
 // ---------- DATOS ----------
+let secCarga = 0;
 async function cargar() {
+  const mi = ++secCarga;
   const [m, l] = await Promise.all([
     supa.from("municipios").select("*").order("orden").order("nombre"),
     supa.from("lideres").select("*").order("orden").order("id"),
   ]);
-  if (m.error || l.error) { toast("Error cargando: " + (m.error || l.error).message); return; }
+  if (mi !== secCarga) return false;                 // llegó una carga más nueva
+  if (m.error || l.error) { toast("Error cargando: " + (m.error || l.error).message); return false; }
   state.municipios = m.data; state.lideres = l.data;
+  return true;
 }
 
-let canal;
+let canal, pendientes = 0, refrescoPendiente = false;
 async function iniciar() {
   state.loaded = true;
   await cargar();
   render();
   if (!canal) {
     let t;
+    const programar = () => { clearTimeout(t); t = setTimeout(refrescar, 600); };
     canal = supa.channel("cambios")
-      .on("postgres_changes", { event: "*", schema: "public", table: "lideres" }, () => { clearTimeout(t); t = setTimeout(refrescar, 400); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "municipios" }, () => { clearTimeout(t); t = setTimeout(refrescar, 400); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "lideres" }, programar)
+      .on("postgres_changes", { event: "*", schema: "public", table: "municipios" }, programar)
       .subscribe();
   }
 }
-async function refrescar() { await cargar(); render(); if (state.sheet) abrirSheet(state.sheet, true); }
+async function refrescar() {
+  if (!state.loaded) return;
+  if (pendientes > 0) { refrescoPendiente = true; return; }   // hay +/− en vuelo: esperar
+  if (!(await cargar())) return;
+  if (state.sheet?.tipo === "lider") return;                  // no pisar lo que se está editando
+  if (state.sheet) abrirSheet(state.sheet, true);
+  else if (state.tab !== "evolucion") render();
+}
 document.addEventListener("visibilitychange", () => { if (!document.hidden && state.loaded) refrescar(); });
 
 // Cálculos por municipio (respeta el modo todos/confirmados)
@@ -257,7 +299,7 @@ function calc(m) {
     ls, asignado, logrados, faltante, cob,
     avance: pct(logrados, asignado),
     prospectos: ls.filter(l => l.estado === "prospecto").length,
-    color: cob >= 90 ? "g" : cob >= 60 ? "y" : "r",
+    color: asignado >= m.meta_total * 0.9 ? "g" : asignado >= m.meta_total * 0.6 ? "y" : "r",
   };
 }
 function totales() {
@@ -326,12 +368,16 @@ function vResumen(v) {
   $("#verTodos").onclick = () => { state.tab = "municipios"; localSet("tab", "municipios"); render(); scrollTo(0, 0); };
 }
 
-function vMunicipios(v) {
+function filtrarMunicipios() {
   const q = state.q.toLowerCase();
   let ms = state.municipios.filter(m => !q || m.nombre.toLowerCase().includes(q) ||
-    state.lideres.some(l => l.municipio_id === m.id && l.nombre.toLowerCase().includes(q)));
-  const key = { faltante: m => -calc(m).faltante, nombre: m => m.nombre, avance: m => calc(m).avance, cobertura: m => calc(m).cob }[state.orden];
-  ms.sort((a, b) => { const x = key(a), y = key(b); return x < y ? -1 : x > y ? 1 : 0; });
+    state.lideres.some(l => l.activo && l.municipio_id === m.id && l.nombre.toLowerCase().includes(q)));
+  if (state.orden === "nombre") ms.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  else { const key = { faltante: m => -calc(m).faltante, avance: m => calc(m).avance, cobertura: m => calc(m).cob }[state.orden];
+    ms.sort((a, b) => key(a) - key(b)); }
+  return ms;
+}
+function vMunicipios(v) {
   v.innerHTML = `
     ${segModo()}
     <div class="toolbar">
@@ -344,16 +390,16 @@ function vMunicipios(v) {
       </select>
     </div>
     ${leyenda}
-    ${ms.map(tarjetaMun).join("") || `<div class="empty">Sin resultados</div>`}
+    <div id="lista"></div>
     <button class="btn sec block" id="nuevoMun">+ Agregar municipio</button>`;
-  bindSegModo(v); bindMun(v);
+  const lista = () => { const l = $("#lista"); l.innerHTML = filtrarMunicipios().map(tarjetaMun).join("") || `<div class="empty">Sin resultados</div>`; bindMun(l); };
+  lista(); bindSegModo(v);
   $("#orden").value = state.orden;
-  $("#orden").onchange = e => { state.orden = e.target.value; localSet("orden", state.orden); render(); };
-  const q2 = $("#q");
-  q2.oninput = () => { state.q = q2.value; const pos = q2.selectionStart; render(); const n = $("#q"); n.focus(); n.setSelectionRange(pos, pos); };
+  $("#orden").onchange = e => { state.orden = e.target.value; localSet("orden", state.orden); lista(); };
+  $("#q").oninput = e => { state.q = e.target.value; lista(); };
   $("#nuevoMun").onclick = async () => {
     const nombre = prompt("Nombre del municipio:"); if (!nombre?.trim()) return;
-    const meta = parseInt(prompt("Meta total:", "0") || "0", 10) || 0;
+    const meta = entero(prompt("Meta total:", "0")) ?? 0;
     const { error } = await supa.from("municipios").insert({ nombre: nombre.trim(), meta_total: meta, orden: state.municipios.length + 1 });
     if (error) return toast(error.message);
     toast("Municipio agregado"); refrescar();
@@ -377,16 +423,17 @@ function vProspectos(v) {
 }
 
 async function vEvolucion(v) {
-  v.innerHTML = `<div class="empty">Cargando…</div>`;
-  const { data, error } = await supa.from("cortes").select("fecha,lider_id,logrados,meta_individual").order("fecha");
+  if (!v.querySelector("#corte")) v.innerHTML = `<div class="empty">Cargando…</div>`;
+  let { data, error } = await supa.from("cortes_municipio").select("fecha,municipio_id,estado,logrados").order("fecha", { ascending: false }).limit(1000);
   if (error) { v.innerHTML = `<div class="empty">${esc(error.message)}</div>`; return; }
-  if (state.tab !== "evolucion") return;
-  const fechas = [...new Set(data.map(c => c.fecha))];
+  if (state.tab !== "evolucion" || state.sheet) return;
+  if (state.modo === "confirmados") data = data.filter(c => c.estado === "confirmado");
+  const fechas = [...new Set(data.map(c => c.fecha))].sort();
   const porFecha = fechas.map(f => data.filter(c => c.fecha === f).reduce((s, c) => s + c.logrados, 0));
-  const munDe = id => state.lideres.find(l => l.id === id)?.municipio_id;
   const ult = fechas.at(-1), prev = fechas.at(-2);
-  const suma = (f, mid) => data.filter(c => c.fecha === f && munDe(c.lider_id) === mid).reduce((s, c) => s + c.logrados, 0);
+  const suma = (f, mid) => data.filter(c => c.fecha === f && c.municipio_id === mid).reduce((s, c) => s + c.logrados, 0);
   v.innerHTML = `
+    ${segModo()}
     <div class="card">
       <div class="meta">Total logrados por corte</div>
       ${fechas.length ? grafica(fechas, porFecha) : `<div class="empty">Aún no hay cortes. Se toma uno automático cada lunes a las 6 a.m.</div>`}
@@ -397,7 +444,9 @@ async function vEvolucion(v) {
     ${state.municipios.map(m => { const a = suma(ult, m.id), b = prev ? suma(prev, m.id) : null, d = b == null ? null : a - b;
       return `<tr><td>${esc(m.nombre)}</td><td>${fmt(a)}</td><td class="${d > 0 ? "up" : d < 0 ? "down" : ""}">${d == null ? "—" : (d > 0 ? "+" : "") + fmt(d)}</td></tr>`; }).join("")}
     </table></div>` : ""}`;
+  bindSegModo(v);
   $("#corte").onclick = async () => {
+    $("#corte").disabled = true;
     const { data: n, error } = await supa.rpc("tomar_corte");
     toast(error ? error.message : `Corte guardado (${n} líderes)`); if (!error) vEvolucion(v);
   };
@@ -444,11 +493,11 @@ function hojaMun(el, id) {
       <div class="row">
         <div class="grow tap" data-lider="${l.id}">
           <div class="name">${esc(l.nombre)}${l.estado === "prospecto" ? `<span class="badge p">prospecto</span>` : ""}${!l.activo ? `<span class="badge x">inactivo</span>` : ""}</div>
-          <div class="meta">Meta ${l.meta_individual != null ? fmt(l.meta_individual) : "—"} · Reg. ${l.registros != null ? fmt(l.registros) : "—"} · <b>Logrados ${fmt(l.logrados)}</b></div>
+          <div class="meta">Meta ${l.meta_individual != null ? fmt(l.meta_individual) : "—"} · Reg. ${l.registros != null ? fmt(l.registros) : "—"} · <b>Logrados <span data-log="${l.id}">${fmt(l.logrados)}</span></b></div>
         </div>
-        ${l.activo ? `<div class="mini"><button data-d="-1" data-id="${l.id}" aria-label="Restar uno">−</button><button data-d="1" data-id="${l.id}" aria-label="Sumar uno">+</button></div>` : ""}
+        ${l.activo ? `<div class="mini" data-fila="${l.id}"><button data-d="-1" data-id="${l.id}" aria-label="Restar uno">−</button><button data-d="1" data-id="${l.id}" aria-label="Sumar uno">+</button></div>` : ""}
       </div>
-      ${l.meta_individual ? `<div class="bar av"><i style="width:${Math.min(av, 100)}%"></i></div><div class="barl"><span></span><span>${av}%</span></div>` : ""}
+      ${l.meta_individual ? `<div class="bar av"><i data-bar="${l.id}" style="width:${Math.min(av, 100)}%"></i></div><div class="barl"><span></span><span data-pct="${l.id}">${av}%</span></div>` : ""}
     </div>`;
   };
   el.innerHTML = cabecera(m.nombre) + `<div class="body">
@@ -470,29 +519,41 @@ function hojaMun(el, id) {
   $$(".mini button", el).forEach(b => b.onclick = () => sumar(+b.dataset.id, +b.dataset.d));
   $("#editMeta").onclick = async () => {
     const v = prompt(`Meta total de ${m.nombre}:`, m.meta_total); if (v == null) return;
-    const n = parseInt(v, 10); if (isNaN(n) || n < 0) return toast("Número inválido");
+    const n = entero(v); if (n == null) return toast("Número inválido");
     const { error } = await supa.from("municipios").update({ meta_total: n }).eq("id", m.id);
-    if (error) return toast(error.message); toast("Meta actualizada"); refrescar();
+    if (error) return toast(error.message); toast(`Meta actualizada: ${fmt(n)}`); refrescar();
   };
   $("#nuevoLider").onclick = async () => {
     const nombre = prompt("Nombre del líder:"); if (!nombre?.trim()) return;
-    const prospecto = confirm("¿Es un PROSPECTO (aún no confirmado)?\nAceptar = prospecto · Cancelar = confirmado");
-    const { data, error } = await supa.from("lideres").insert({ municipio_id: m.id, nombre: nombre.trim(), estado: prospecto ? "prospecto" : "confirmado", orden: 1000 }).select().single();
+    const confirmado = confirm(`¿${nombre.trim()} ya está CONFIRMADO?\n\nAceptar = confirmado\nCancelar = queda como prospecto`);
+    const { data, error } = await supa.from("lideres").insert({ municipio_id: m.id, nombre: nombre.trim(), estado: confirmado ? "confirmado" : "prospecto", orden: 1000 }).select().single();
     if (error) return toast(error.message);
     await cargar(); abrirSheet({ tipo: "lider", id: data.id });
   };
 }
 
+function pintarFila(l) {
+  const n = $(`[data-log="${l.id}"]`); if (n) n.textContent = fmt(l.logrados);
+  const p = pct(l.logrados, l.meta_individual || 0);
+  const b = $(`[data-bar="${l.id}"]`); if (b) b.style.width = Math.min(p, 100) + "%";
+  const t = $(`[data-pct="${l.id}"]`); if (t) t.textContent = p + "%";
+}
+// Suma/resta en el servidor (atómica): no se pierden toques rápidos ni de dos personas a la vez
 async function sumar(id, d) {
   const l = state.lideres.find(x => x.id === id); if (!l) return;
-  const nuevo = Math.max(0, (l.logrados || 0) + d);
-  l.logrados = nuevo; abrirSheet(state.sheet, true);           // respuesta inmediata
-  const { error } = await supa.from("lideres").update({ logrados: nuevo }).eq("id", id);
-  if (error) { toast(error.message); refrescar(); }
+  l.logrados = Math.max(0, (l.logrados || 0) + d); pintarFila(l);   // respuesta inmediata
+  pendientes++;
+  const { data, error } = await supa.rpc("incrementar_logrados", { p_id: id, p_d: d });
+  pendientes--;
+  if (error) toast(error.message);
+  else if (pendientes === 0 && data != null) { l.logrados = data; pintarFila(l); }
+  if (pendientes === 0 && (error || refrescoPendiente)) { refrescoPendiente = false; refrescar(); }
 }
 
+let tokenHoja = 0;
 async function hojaLider(el, id) {
   const l = state.lideres.find(x => x.id === id); if (!l) return cerrarSheet();
+  const mi = ++tokenHoja, vigente = () => tokenHoja === mi && state.sheet?.tipo === "lider" && state.sheet.id === id;
   const m = state.municipios.find(x => x.id === l.municipio_id);
   el.innerHTML = cabecera(l.nombre) + `<div class="body">
     <div class="meta">${esc(m?.nombre)}${l.actualizado_por ? ` · actualizado ${fecha(l.actualizado)} por ${esc(l.actualizado_por)}` : ""}</div>
@@ -531,35 +592,45 @@ async function hojaLider(el, id) {
   </div>`;
   $("#back").onclick = cerrarSheet;
   let estado = l.estado;
+  const l0 = { ...l };
   $$("#fEstado button", el).forEach(b => b.onclick = () => { estado = b.dataset.e; $$("#fEstado button", el).forEach(x => x.classList.toggle("on", x === b)); });
   const fLog = $("#fLog");
-  const pinta = () => { if (!l.meta_individual) return; const p = pct(+fLog.value || 0, l.meta_individual); $("#fBar").style.width = Math.min(p, 100) + "%"; $("#fPct").textContent = p + "%"; };
+  const pinta = () => { const meta = entero($("#fMeta").value); if (!meta || !$("#fBar")) return; const p = pct(entero(fLog.value) || 0, meta); $("#fBar").style.width = Math.min(p, 100) + "%"; $("#fPct").textContent = p + "%"; };
+  $("#fMeta").addEventListener("input", pinta);
   fLog.oninput = pinta;
-  $$("[data-q]", el).forEach(b => b.onclick = () => { fLog.value = Math.max(0, (+fLog.value || 0) + +b.dataset.q); pinta(); });
-  const num = v => v === "" ? null : Math.max(0, parseInt(v, 10) || 0);
+  $$("[data-q]", el).forEach(b => b.onclick = () => { fLog.value = Math.max(0, (entero(fLog.value) || 0) + +b.dataset.q); pinta(); });
+  const num = entero;
   $("#guardar").onclick = async () => {
     const nombre = $("#fNom").value.trim(); if (!nombre) return toast("El nombre no puede quedar vacío");
-    const cambios = { logrados: num(fLog.value) ?? 0, estado, registros: num($("#fReg").value), meta_individual: num($("#fMeta").value),
+    const nuevos = { estado, registros: num($("#fReg").value), meta_individual: num($("#fMeta").value),
       nombre, municipio_id: +$("#fMun").value, activo: $("#fAct").checked };
+    // Solo se envía lo que cambió, para no pisar lo que otra persona haya guardado
+    const cambios = Object.fromEntries(Object.entries(nuevos).filter(([k, v]) => v !== l0[k]));
+    const deltaLog = (num(fLog.value) ?? 0) - l0.logrados;
     $("#guardar").disabled = true;
-    const { error } = await supa.from("lideres").update(cambios).eq("id", l.id);
+    let error;
+    if (Object.keys(cambios).length) ({ error } = await supa.from("lideres").update(cambios).eq("id", l.id));
+    if (!error && deltaLog) ({ error } = await supa.rpc("incrementar_logrados", { p_id: l.id, p_d: deltaLog }));
     $("#guardar").disabled = false;
     if (error) return toast(error.message);
     toast("Guardado"); await cargar(); cerrarSheet();
   };
   $("#addNota").onclick = async () => {
     const nota = $("#nota").value.trim(); if (!nota) return;
+    $("#addNota").disabled = true;
     const { error } = await supa.from("bitacora").insert({ lider_id: l.id, nota });
+    if ($("#addNota")) $("#addNota").disabled = false;
     if (error) return toast(error.message);
     $("#nota").value = ""; toast("Nota agregada"); cargarNotas();
   };
   const cargarNotas = async () => {
     const { data, error } = await supa.from("bitacora").select("*").eq("lider_id", l.id).order("fecha", { ascending: false });
+    if (!vigente()) return;
     $("#notas").innerHTML = error ? esc(error.message) : data.map(n => `<div class="note"><div class="d">${fecha(n.fecha)} · ${esc(n.autor || "")}</div>${esc(n.nota).replace(/\n/g, "<br>")}</div>`).join("") || `<div class="empty">Sin notas todavía</div>`;
   };
   cargarNotas();
   const { data: cs } = await supa.from("cortes").select("fecha,logrados").eq("lider_id", l.id).order("fecha");
-  if ($("#hist")) $("#hist").innerHTML = cs?.length ? grafica(cs.map(c => c.fecha), cs.map(c => c.logrados)) : `<div class="empty">Sin cortes todavía</div>`;
+  if (vigente()) $("#hist").innerHTML = cs?.length ? grafica(cs.map(c => c.fecha), cs.map(c => c.logrados)) : `<div class="empty">Sin cortes todavía</div>`;
 }
 
 // Arranque
